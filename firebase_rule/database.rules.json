@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "rooms": {
+      "main_v3": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "danmaku_submissions": {
+          ".indexOn": [
+            "created_at_ms"
+          ]
+        }
+      }
+    }
+  }
+}
