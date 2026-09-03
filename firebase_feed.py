@@ -195,10 +195,12 @@ class FirebaseFeedClient:
         for key, value in self._messages.items():
             message = dict(value)
             request_id = _message_id(key, message)
+            timestamp_key = _timestamp_key(key)
             text = str(message.get("text", "")).strip()
             created_at_ms = message.get("created_at_ms")
             if (
                 not request_id
+                or timestamp_key is None
                 or request_id in self._seen
                 or not text
                 or isinstance(created_at_ms, bool)
@@ -231,6 +233,12 @@ class FirebaseFeedClient:
 
 def _message_id(key: str, value: dict[str, object]) -> str:
     return str(value.get("request_id", key)).strip()
+
+
+def _timestamp_key(key: str) -> int | None:
+    if not key.isdigit():
+        return None
+    return int(key)
 
 
 def _short_error(error: BaseException) -> str:

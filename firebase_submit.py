@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.parse
 from dataclasses import dataclass
 from typing import Any
@@ -57,7 +58,8 @@ def submit_text(
 ) -> SubmissionResult:
     auth_client = auth or FirebaseAuth(api_key=FIREBASE_API_KEY)
     stable_request_id = request_id or new_request_id()
-    endpoint = _submission_url(database_url or firebase_database_url(), room_id, stable_request_id)
+    timestamp_ms = int(time.time() * 1000)
+    endpoint = _submission_url(database_url or firebase_database_url(), room_id, timestamp_ms)
     try:
         payload = build_payload(text, request_id=stable_request_id, auth_uid=auth_client.local_id)
         try:
@@ -85,13 +87,13 @@ def _read_existing(auth: FirebaseAuth, endpoint: str) -> dict[str, object] | Non
     return value or None
 
 
-def _submission_url(database_url: str, room_id: str, request_id: str) -> str:
+def _submission_url(database_url: str, room_id: str, timestamp_ms: int) -> str:
     return (
         database_url.rstrip("/")
         + "/rooms/"
         + urllib.parse.quote(room_id, safe="")
         + "/danmaku_submissions/"
-        + urllib.parse.quote(request_id, safe="")
+        + urllib.parse.quote(str(timestamp_ms), safe="")
         + ".json"
     )
 

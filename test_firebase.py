@@ -43,13 +43,13 @@ class FirebaseTests(unittest.TestCase):
         client._handle_event("put", json.dumps({
             "path": "/",
             "data": {
-                "a": {"request_id": "a", "text": "old", "created_at_ms": 100},
-                "b": {"request_id": "b", "text": "old2", "created_at_ms": 200},
+                "100": {"request_id": "a", "text": "old", "created_at_ms": 100},
+                "200": {"request_id": "b", "text": "old2", "created_at_ms": 200},
             },
         }))
         self.assertEqual(received, [])
         client._handle_event("put", json.dumps({
-            "path": "/c",
+            "path": "/300",
             "data": {"request_id": "c", "text": "new", "created_at_ms": 300},
         }))
         self.assertEqual([item["request_id"] for item in received], ["c"])
@@ -58,14 +58,14 @@ class FirebaseTests(unittest.TestCase):
         received: list[dict[str, object]] = []
         client = FirebaseFeedClient(on_message=received.append)
         client._handle_event("put", json.dumps({
-            "path": "/",
-            "data": {"a": {"request_id": "a", "text": "old", "created_at_ms": 100}},
+                "path": "/",
+                "data": {"100": {"request_id": "a", "text": "old", "created_at_ms": 100}},
         }))
         client._handle_event("put", json.dumps({
             "path": "/",
             "data": {
-                "a": {"request_id": "a", "text": "old", "created_at_ms": 100},
-                "b": {"request_id": "b", "text": "new", "created_at_ms": 200},
+                "100": {"request_id": "a", "text": "old", "created_at_ms": 100},
+                "200": {"request_id": "b", "text": "new", "created_at_ms": 200},
             },
         }))
         self.assertEqual([item["request_id"] for item in received], ["b"])
@@ -79,8 +79,8 @@ class FirebaseTests(unittest.TestCase):
 
     def test_submission_url_targets_main_v3_submissions(self) -> None:
         self.assertEqual(
-            _submission_url("https://example.test", "room", "client-fixed"),
-            "https://example.test/rooms/room/danmaku_submissions/client-fixed.json",
+            _submission_url("https://example.test", "room", 1788410612101),
+            "https://example.test/rooms/room/danmaku_submissions/1788410612101.json",
         )
 
 

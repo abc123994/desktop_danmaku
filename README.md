@@ -8,12 +8,13 @@ Windows 桌面 Client 直接使用 Firebase Realtime Database：每個 Client
 ## Firebase 資料契約
 
 - Room：`main_v3`
-- Path：`rooms/main_v3/danmaku_submissions/{request_id}`
+- Path：`rooms/main_v3/danmaku_submissions/{timestamp_ms}`
 - Database URL：預設使用目前 Firebase；可由 `DANMAKU_FIREBASE_DATABASE_URL` 覆寫
 - 認證：Firebase Anonymous Auth
 - 權限：已登入客端可讀寫（完整規則見 [firebase_rule/database.rules.json](firebase_rule/database.rules.json)）
 - `created_at_ms`：Firebase Server Timestamp，儲存後是 Unix epoch milliseconds 整數
-- `request_id`：Client UUID，同時作為資料 key 與去重識別
+- `request_id`：Client UUID，作為資料內容的去重識別
+- 第一層 timestamp key：Client 產生的 Unix epoch milliseconds；同一毫秒後寫入者會覆蓋前一筆
 - 不使用 `status`、`feed_id`、`dc_messages` 或 `latest_dc_feed_id`
 
 Rules 檔是完整 RTDB 規則範例；部署前須與 Firebase 現有其他路徑規則合併，
@@ -60,4 +61,3 @@ Start-Process .\\start_danmaku.bat
 - `firebase_submit.py)：直接寫入 `danmaku_submissions`。
 - `overlay_position.py)：彈幕初始位置計算。
 - `test_*.py)：單元測試。
-
