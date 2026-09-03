@@ -55,9 +55,35 @@ Start-Process .\\start_danmaku.bat
 
 ## 檔案
 
-- `desktop_danmaku.py)：系統匣、透明多螢幕 Overlay、熱鍵與主程式。
-- `firebase_auth.py)：Anonymous Auth、token 更新與 RTDB request。
-- `firebase_feed.py)：直接訂閱 `danmaku_submissions` 的 SSE feed。
-- `firebase_submit.py)：直接寫入 `danmaku_submissions`。
-- `overlay_position.py)：彈幕初始位置計算。
-- `test_*.py)：單元測試。
+- `desktop_danmaku.py`：系統匣、透明多螢幕 Overlay、熱鍵與主程式。
+- `firebase_auth.py`：Anonymous Auth、token 更新與 RTDB request。
+- `firebase_feed.py`：直接訂閱 `danmaku_submissions` 的 SSE feed。
+- `firebase_submit.py`：直接寫入 `danmaku_submissions`。
+- `firebase_cleanup.py`：依第一層 timestamp 清理過期投稿。
+- `cleanup_expired_submissions.bat`：一鍵清理批次檔。
+- `overlay_position.py`：彈幕初始位置計算。
+- `test_*.py`：單元測試。
+
+## 清理過期資料
+
+預設保留最近 24 小時，執行：
+
+```bat
+cleanup_expired_submissions.bat
+```
+
+手動指定保留時間（小時）：
+
+```bat
+cleanup_expired_submissions.bat 72
+```
+
+只預覽不刪除：
+
+```bat
+cleanup_expired_submissions.bat 72 --dry-run
+```
+
+清理範圍固定為 `rooms/main_v3/danmaku_submissions`，只會刪除第一層 key
+為 epoch milliseconds 且早於保留期限的資料。Firebase URL 同樣遵循
+`DANMAKU_FIREBASE_DATABASE_URL` 覆寫規則。

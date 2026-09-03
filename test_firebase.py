@@ -7,11 +7,62 @@ import unittest
 from unittest.mock import patch
 
 from firebase_auth import firebase_database_url
+from firebase_cleanup import CleanupError, cleanup_expired, expired_keys, submissions_url
 from firebase_feed import FirebaseFeedClient, feed_url, iter_sse_events
 from firebase_submit import SubmissionError, _submission_url, build_payload
 
 
 class FirebaseTests(unittest.TestCase):
+    def test_expired_keys_use_timestamp_key_and_keep_hours(self) -> None:
+        submissions = {"100": {}, "200": {}, "300": {}}
+        self.assertEqual(expired_keys(submissions, now_ms=300, keep_hours=0.0000278), ["100"])
+        with self.assertRaises(CleanupError):
+            expired_keys(submissions, now_ms=300, keep_hours=0)
+
+    def test_cleanup_dry_run_does_not_delete(self) -> None:
+        class FakeAuth:
+            def __init__(self) -> None:
+                self.calls: list[tuple[str, str]] = []
+
+            def request(self, method: str, url: str, **_kwargs: object) -> tuple[int, bytes]:
+                self.calls.append((method, url))
+                return 200, b'{"100":{"text":"old"},"300":{"text":"new"}}'
+
+        auth = FakeAuth()
+        keys = cleanup_expired(
+            auth=auth,
+            database_url="https://example.test",
+            now_ms=300,
+            keep_hours=0.0000278,
+            dry_run=True,
+        )
+        self.assertEqual(keys, ["100"])
+        self.assertEqual([method for method, _url in auth.calls], ["GET"])
+
+    def test_cleanup_deletes_only_expired_timestamp_keys(self) -> None:
+        class FakeAuth:
+            def __init__(self) -> None:
+                self.calls: list[tuple[str, str]] = []
+
+            def request(self, method: str, url: str, **_kwargs: object) -> tuple[int, bytes]:
+                self.calls.append((method, url))
+                if method == "GET":
+                    return 200, b'{"100":{"text":"old"},"300":{"text":"new"}}'
+                return 200, b"null"
+
+        auth = FakeAuth()
+        cleanup_expired(auth=auth, database_url="https://example.test", now_ms=300, keep_hours=0.0000278)
+        self.assertEqual(
+            auth.calls[1],
+            ("DELETE", "https://example.test/rooms/main_v3/danmaku_submissions/100.json"),
+        )
+
+    def test_cleanup_url_targets_submissions(self) -> None:
+        self.assertEqual(
+            submissions_url("https://example.test", "room"),
+            "https://example.test/rooms/room/danmaku_submissions.json",
+        )
+
     def test_database_url_defaults_when_environment_is_missing(self) -> None:
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("DANMAKU_FIREBASE_DATABASE_URL", None)
